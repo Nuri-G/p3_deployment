@@ -16,13 +16,7 @@ async fn make_connection_pool() -> Pool<Postgres> {
 async fn get_menu() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
     let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items").fetch_all(&pool).await.expect("Failed to execute query.");
-
-    let mut items = Vec::<MenuItem>::new();
-    for row in rows {
-        items.push(row);
-    }
-
-    Ok(web::Json(items))
+    Ok(web::Json(rows))
 }
 
 #[post("/api/menu")]
