@@ -1,11 +1,15 @@
+use std::env;
+
 use actix_web::{get, web, App, Result, HttpServer, Responder, post, HttpResponse};
 mod models;
 use models::menu_item::{MenuItem};
 use sqlx::{postgres::PgPoolOptions, Postgres, Pool};
-mod secrets;
+use dotenvy::dotenv;
+
+use crate::models::sale::Sale;
 
 async fn make_connection_pool() -> Pool<Postgres> {
-    let connection_string = format!("postgres://{}:{}@{}/{}", secrets::USERNAME, secrets::PASSWORD, secrets::URL, secrets::DB_NAME);
+    let connection_string = env::var("DATABASE_URL").unwrap();
     PgPoolOptions::new()
         .max_connections(5)
         .connect(connection_string.as_str())
@@ -31,13 +35,34 @@ async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
         }
 }
 
+#[get("/api/sales")]
+async fn get_sales() -> Result<impl Responder> {
+    let pool = make_connection_pool().await;
+    let rows: Vec<Sale> = sqlx::query_as("SELECT * FROM sales").fetch_all(&pool).await.expect("Failed to execute query.");
+    Ok(web::Json(rows))
+}
+
+#[post("/api/sales")]
+async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
+    let pool = make_connection_pool().await;
+    match sqlx::query!("INSERT INTO sales VALUES ($1, $2, $3, $4, $5)",
+        data.id, data.timestamp, &data.menu_items_id, data.total_sales_price, data.employee_id)
+        .execute(&pool)
+        .await {
+            Ok(_) => HttpResponse::Ok().finish(),
+            Err(_) => HttpResponse::BadRequest().finish(),
+        }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // dotenv().ok();
+    dotenv().ok();
     HttpServer::new(|| {
         App::new()
             .service(get_menu)
             .service(post_menu)
+            .service(get_sales)
+            .service(post_sales)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
