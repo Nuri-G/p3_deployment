@@ -2,6 +2,8 @@ use actix_web::{get, web, App, Result, HttpServer, Responder, post, HttpResponse
 mod models;
 use models::menu_item::{MenuItem};
 use sqlx::{postgres::PgPoolOptions, Postgres, Pool};
+
+use crate::models::sale::Sale;
 mod secrets;
 
 async fn make_connection_pool() -> Pool<Postgres> {
@@ -31,6 +33,13 @@ async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
         }
 }
 
+#[get("/api/sales")]
+async fn get_sales() -> Result<impl Responder> {
+    let pool = make_connection_pool().await;
+    let rows: Vec<Sale> = sqlx::query_as("SELECT * FROM sales").fetch_all(&pool).await.expect("Failed to execute query.");
+    Ok(web::Json(rows))
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // dotenv().ok();
@@ -38,6 +47,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(get_menu)
             .service(post_menu)
+            .service(get_sales)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
