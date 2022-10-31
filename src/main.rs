@@ -26,11 +26,9 @@ async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
         data.id, data.name, &data.ingredients_inventory_id, data.category, data.price)
         .execute(&pool)
         .await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::BadRequest().finish(),
-    }
-
-    
+            Ok(_) => HttpResponse::Ok().finish(),
+            Err(_) => HttpResponse::BadRequest().finish(),
+        }
 }
 
 #[actix_web::main]
