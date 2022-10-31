@@ -1,13 +1,15 @@
+use std::env;
+
 use actix_web::{get, web, App, Result, HttpServer, Responder, post, HttpResponse};
 mod models;
 use models::menu_item::{MenuItem};
 use sqlx::{postgres::PgPoolOptions, Postgres, Pool};
+use dotenvy::dotenv;
 
 use crate::models::sale::Sale;
-mod secrets;
 
 async fn make_connection_pool() -> Pool<Postgres> {
-    let connection_string = format!("postgres://{}:{}@{}/{}", secrets::USERNAME, secrets::PASSWORD, secrets::URL, secrets::DB_NAME);
+    let connection_string = env::var("DATABASE_URL").unwrap();
     PgPoolOptions::new()
         .max_connections(5)
         .connect(connection_string.as_str())
@@ -42,7 +44,7 @@ async fn get_sales() -> Result<impl Responder> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // dotenv().ok();
+    dotenv().ok();
     HttpServer::new(|| {
         App::new()
             .service(get_menu)
