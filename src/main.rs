@@ -42,6 +42,18 @@ async fn get_sales() -> Result<impl Responder> {
     Ok(web::Json(rows))
 }
 
+#[post("/api/sales")]
+async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
+    let pool = make_connection_pool().await;
+    match sqlx::query!("INSERT INTO sales VALUES ($1, $2, $3, $4, $5)",
+        data.id, data.timestamp, &data.menu_items_id, data.total_sales_price, data.employee_id)
+        .execute(&pool)
+        .await {
+            Ok(_) => HttpResponse::Ok().finish(),
+            Err(_) => HttpResponse::BadRequest().finish(),
+        }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -50,6 +62,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_menu)
             .service(post_menu)
             .service(get_sales)
+            .service(post_sales)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
