@@ -1,21 +1,11 @@
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct MenuItem {
-    id: i32,
-    name: String,
-    category: String,
-    price: f32,
-}
-
-impl MenuItem {
-    pub fn new(id: i32, name: String, category: String, price: f32) -> Self {
-        Self {
-            id,
-            name,
-            category,
-            price,
-        }
-    }
+    pub id: i32,
+    pub name: String,
+    pub category: String,
+    pub ingredients_inventory_id: Vec<i32>,
+    pub price: f32,
 }
