@@ -26,8 +26,8 @@ async fn get_menu() -> Result<impl Responder> {
 #[post("/api/menu")]
 async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
     let pool = make_connection_pool().await;
-    match sqlx::query!("INSERT INTO menu_items (id, name, ingredients_inventory_id, category, price) VALUES ($1, $2, $3, $4, $5)",
-        data.id, data.name, &data.ingredients_inventory_id, data.category, data.price)
+    match sqlx::query!("INSERT INTO menu_items (id, name, ingredients_inventory_id, category, price, description) VALUES ($1, $2, $3, $4, $5, $6)",
+        data.id, data.name, &data.ingredients_inventory_id, data.category, data.price, data.description)
         .execute(&pool)
         .await {
             Ok(_) => HttpResponse::Ok().finish(),
