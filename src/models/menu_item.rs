@@ -8,4 +8,5 @@ pub struct MenuItem {
     pub category: String,
     pub ingredients_inventory_id: Vec<i32>,
     pub price: f32,
+    pub description: String,
 }
