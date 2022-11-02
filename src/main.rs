@@ -1,5 +1,6 @@
 use std::env;
 
+use actix_cors::Cors;
 use actix_web::{get, web, App, Result, HttpServer, Responder, post, HttpResponse};
 mod models;
 use models::menu_item::{MenuItem};
@@ -58,7 +59,9 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     HttpServer::new(|| {
+        let cors = Cors::default().supports_credentials();
         App::new()
+            .wrap(cors)
             .service(get_menu)
             .service(post_menu)
             .service(get_sales)
