@@ -59,7 +59,7 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     HttpServer::new(|| {
-        let cors = Cors::default().supports_credentials();
+        let cors = Cors::permissive();
         App::new()
             .wrap(cors)
             .service(get_menu)
