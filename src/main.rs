@@ -1,5 +1,6 @@
 mod models;
 
+use actix_cors::Cors;
 use actix_web::{HttpServer, App};
 use dotenvy::dotenv;
 
@@ -10,7 +11,9 @@ use crate::models::sale::{get_sales, post_sales};
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     HttpServer::new(|| {
+        let cors = Cors::permissive();
         App::new()
+            .wrap(cors)
             .service(get_menu)
             .service(post_menu)
             .service(get_sales)
