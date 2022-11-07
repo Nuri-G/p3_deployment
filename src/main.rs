@@ -6,7 +6,7 @@ use dotenvy::dotenv;
 
 use crate::models::menu_item::{get_menu, post_menu};
 use crate::models::sale::{get_sales, post_sales};
-use crate::models::ingredients::{get_ingredients, post_ingredients};
+use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredients};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_sales)
             .service(get_ingredients)
             .service(post_ingredients)
+            .service(put_ingredients)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
