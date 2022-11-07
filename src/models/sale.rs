@@ -1,5 +1,8 @@
 use chrono::{NaiveDate, Local};
 use serde::{Serialize, Deserialize};
+use actix_web::{get, web, Result, Responder, post, HttpResponse};
+
+use crate::models::helpers::make_connection_pool;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Sale {
