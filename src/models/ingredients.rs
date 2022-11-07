@@ -21,8 +21,8 @@ pub async fn get_ingredients() -> Result<impl Responder> {
 #[post("/api/ingredients")]
 pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;
-    match sqlx::query!("INSERT INTO ingredients_inventory (id, item_name, item_amount, storage_location) VALUES ($1, $2, $3, $4)",
-        data.id, data.item_name, data.item_amount, data.storage_location)
+    match sqlx::query!("INSERT INTO ingredients_inventory (item_name, item_amount, storage_location) VALUES ($1, $2, $3)",
+        data.item_name, data.item_amount, data.storage_location)
         .execute(&pool)
         .await {
             Ok(_) => HttpResponse::Ok().finish(),
