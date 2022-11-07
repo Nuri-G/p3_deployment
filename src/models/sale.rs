@@ -31,7 +31,7 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
             Ok(_) => HttpResponse::Ok().finish(),
             Err(e) => {
                 println!("{}", e);
-                return HttpResponse::BadRequest().finish()
+                HttpResponse::BadRequest().finish()
             }
         }
 }
