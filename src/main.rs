@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_ingredients)
             .service(put_ingredients)
     })
-    .bind((host, 80))?
+    .bind((host, 443))?
     .run()
     .await
 }
