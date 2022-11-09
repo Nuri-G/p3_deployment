@@ -5,7 +5,7 @@ use crate::models::helpers::make_connection_pool;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Ingredient {
-    pub id: i32,
+    pub id: Option<i32>,
     pub item_name: String,
     pub item_amount: i32,
     pub storage_location: String,
