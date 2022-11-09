@@ -13,7 +13,8 @@ use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredie
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let host = env::var("HOST").expect("Failed to read 'HOST' environment variable");
+    let host = env::var("HOST").expect("Failed to read 'HOST' environment variable.
+        Use 127.0.0.1 for local or 0.0.0.0 for deployment.");
     HttpServer::new(|| {
         let cors = Cors::permissive();
         App::new()
