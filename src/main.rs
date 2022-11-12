@@ -6,7 +6,7 @@ use actix_cors::Cors;
 use actix_web::{HttpServer, App};
 use dotenvy::dotenv;
 
-use crate::models::menu_item::{get_menu, post_menu};
+use crate::models::menu_item::{get_menu, post_menu, put_menu};
 use crate::models::sale::{get_sales, post_sales};
 use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredients};
 
@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .service(get_menu)
             .service(post_menu)
+            .service(put_menu)
             .service(get_sales)
             .service(post_sales)
             .service(get_ingredients)
