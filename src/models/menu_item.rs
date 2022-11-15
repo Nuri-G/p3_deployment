@@ -16,7 +16,7 @@ pub struct MenuItem {
 #[get("/api/menu")]
 pub async fn get_menu() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
-    let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items").fetch_all(&pool).await.expect("Failed to execute query.");
+    let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items ORDER BY name ASC").fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
 }
 

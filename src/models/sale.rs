@@ -16,7 +16,7 @@ pub struct Sale {
 #[get("/api/sales")]
 async fn get_sales() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
-    let rows: Vec<Sale> = sqlx::query_as("SELECT * FROM sales").fetch_all(&pool).await.expect("Failed to execute query.");
+    let rows: Vec<Sale> = sqlx::query_as("SELECT * FROM sales ORDER BY timestamp ASC").fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
 }
 
