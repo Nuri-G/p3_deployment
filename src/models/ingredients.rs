@@ -33,8 +33,8 @@ pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
 #[put("/api/ingredients")]
 pub async fn put_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;
-    match sqlx::query!("UPDATE ingredients_inventory SET item_amount = $1, storage_location = $2 WHERE id = $3",
-        data.item_amount, data.storage_location, data.id)
+    match sqlx::query!("UPDATE ingredients_inventory SET item_name = $1, item_amount = $2, storage_location = $3 WHERE id = $4",
+        data.item_name, data.item_amount, data.storage_location, data.id)
         .execute(&pool)
         .await {
             Ok(_) => HttpResponse::Ok().finish(),
