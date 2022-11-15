@@ -14,7 +14,7 @@ pub struct Ingredient {
 #[get("/api/ingredients")]
 pub async fn get_ingredients() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
-    let rows: Vec<Ingredient> = sqlx::query_as("SELECT * FROM ingredients_inventory").fetch_all(&pool).await.expect("Failed to execute query.");
+    let rows: Vec<Ingredient> = sqlx::query_as("SELECT * FROM ingredients_inventory ORDER BY item_name ASC").fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
 }
 
