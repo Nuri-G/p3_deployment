@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let host = env::var("HOST").expect("Failed to read 'HOST' environment variable.
         Use 127.0.0.1 for local or 0.0.0.0 for deployment.");
+    let port = env::var("PORT").unwrap().parse::<u16>().unwrap();
     HttpServer::new(|| {
         let cors = Cors::permissive();
         App::new()
@@ -28,7 +29,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_ingredients)
             .service(put_ingredients)
     })
-    .bind((host, 8080))?
+    .bind((host, port))?
     .run()
     .await
 }
