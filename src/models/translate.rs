@@ -4,7 +4,6 @@ use serde_json::Value;
 
 pub async fn translate(body: String, from: String, to: String) -> String {
     let client = reqwest::Client::new();
-    println!("{}", to);
     let params = [("from", from.as_str()), ("to", "es"), ("json", body.as_str()), ("protected_keys", "ingredients_inventory_id")];
     let res = client.post("https://nlp-translation.p.rapidapi.com/v1/jsontranslate")
         .header("X-RapidAPI-Key", env::var("TRANSLATE_KEY").unwrap())

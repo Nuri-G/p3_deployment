@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use actix_web::{get, web::{self, Path}, Result, Responder, post, HttpResponse, put};
+use actix_web::{get, web::{self, Path, Json}, Result, Responder, post, HttpResponse, put};
 
 use crate::models::{helpers::make_connection_pool, translate::translate};
 
@@ -13,15 +13,27 @@ pub struct MenuItem {
     pub description: String,
 }
 
-#[get("/api/menu/{language}")]
-pub async fn get_menu(language: Path<String>) -> Result<impl Responder> {
-    let language = language.into_inner();
+async fn get_menu_items() -> Result<Json<Vec<MenuItem>>> {
     let pool = make_connection_pool().await;
     let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items ORDER BY name ASC").fetch_all(&pool).await.expect("Failed to execute query.");
     let json = web::Json(rows);
-    let json_string = serde_json::to_string(&json).unwrap();
+
+    return  Ok(json);
+}
+
+#[get("/api/menu")]
+pub async fn get_menu() -> Result<impl Responder> {
+    get_menu_items().await
+
+}
+
+#[get("/api/menu/{language}")]
+pub async fn get_menu_translated(language: Path<String>) -> Result<impl Responder> {
+    let language = language.into_inner();
+    let json = get_menu_items().await.unwrap();
 
     if language == "en" {
+        let json_string = serde_json::to_string(&json).unwrap();
         return  Ok(json_string);
     }
 
@@ -29,7 +41,6 @@ pub async fn get_menu(language: Path<String>) -> Result<impl Responder> {
     for a in json.iter() {
         let s = serde_json::to_string(a).unwrap();
         let tr = translate(s, "en".to_string(), language.clone()).await.split("\n").next().unwrap().to_owned();
-        println!("{}", tr);
         translated += &tr;
         translated += ",";
     }
