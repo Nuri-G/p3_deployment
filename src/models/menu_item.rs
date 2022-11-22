@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
-use actix_web::{get, web, Result, Responder, post, HttpResponse, put};
+use actix_web::{get, web::{self, Path}, Result, Responder, post, HttpResponse, put};
 
-use crate::models::helpers::make_connection_pool;
+use crate::models::{helpers::make_connection_pool, translate::translate};
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct MenuItem {
@@ -13,11 +13,29 @@ pub struct MenuItem {
     pub description: String,
 }
 
-#[get("/api/menu")]
-pub async fn get_menu() -> Result<impl Responder> {
+#[get("/api/menu/{language}")]
+pub async fn get_menu(language: Path<String>) -> Result<impl Responder> {
+    let language = language.into_inner();
     let pool = make_connection_pool().await;
     let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items ORDER BY name ASC").fetch_all(&pool).await.expect("Failed to execute query.");
-    Ok(web::Json(rows))
+    let json = web::Json(rows);
+    let json_string = serde_json::to_string(&json).unwrap();
+
+    if language == "en" {
+        return  Ok(json_string);
+    }
+
+    let mut translated = "{".to_string();
+    for a in json.iter() {
+        let s = serde_json::to_string(a).unwrap();
+        let tr = translate(s, "en".to_string(), language.clone()).await.split("\n").next().unwrap().to_owned();
+        println!("{}", tr);
+        translated += &tr;
+        translated += ",";
+    }
+    translated = translated[0.. translated.len() - 1].to_string();
+    translated += "}";
+    Ok(translated)
 }
 
 #[post("/api/menu")]
