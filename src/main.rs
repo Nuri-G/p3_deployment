@@ -5,6 +5,7 @@ use std::env;
 use actix_cors::Cors;
 use actix_web::{HttpServer, App};
 use dotenvy::dotenv;
+use models::employee::user_from_token;
 use models::menu_item::get_menu_translated;
 
 use crate::models::menu_item::{get_menu, post_menu, put_menu};
@@ -34,6 +35,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_employees)
             .service(post_employees)
             .service(put_employees)
+            .service(user_from_token)
     })
     .bind((host, port))?
     .run()
