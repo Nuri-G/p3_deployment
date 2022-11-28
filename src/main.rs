@@ -7,6 +7,7 @@ use actix_web::{HttpServer, App};
 use dotenvy::dotenv;
 use models::employee::user_from_token;
 use models::menu_item::get_menu_translated;
+use models::translate::translated_keywords;
 
 use crate::models::menu_item::{get_menu, post_menu, put_menu};
 use crate::models::sale::{get_sales, post_sales};
@@ -36,6 +37,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_employees)
             .service(put_employees)
             .service(user_from_token)
+            .service(translated_keywords)
     })
     .bind((host, port))?
     .run()
