@@ -1,7 +1,6 @@
-use std::pin::Pin;
-
+use actix_rt::task::JoinHandle;
 use serde::{Serialize, Deserialize};
-use actix_web::{get, web::{self, Json, Path}, Result, Responder, post, HttpResponse, put};
+use actix_web::{get, web::{self, Json, Path}, Result, Responder, post, HttpResponse, put, rt};
 
 use crate::models::{helpers::make_connection_pool, translate::translate};
 
@@ -15,19 +14,25 @@ pub struct MenuItem {
     pub description: String,
 }
 
-async fn translate_menu_item(menu_item: &MenuItem, target_language: &str) -> MenuItem {
+impl Clone for MenuItem {
+    fn clone(&self) -> Self {
+        Self { id: self.id.clone(), name: self.name.clone(), category: self.category.clone(), ingredients_inventory_id: self.ingredients_inventory_id.clone(), price: self.price.clone(), description: self.description.clone() }
+    }
+}
+
+async fn translate_menu_item(menu_item: MenuItem, target_language: String) -> MenuItem {
     const FROM: &str = "en";
 
-    let name = translate(menu_item.name.to_owned(), FROM, target_language);
-    let category = translate(menu_item.category.to_owned(), FROM, target_language);
-    let description = translate(menu_item.description.to_owned(), FROM, target_language);
+    let name = rt::spawn(translate(menu_item.name.to_owned(), FROM.to_owned(), target_language.to_owned()));
+    let category = rt::spawn(translate(menu_item.category.to_owned(), FROM.to_owned(), target_language.to_owned()));
+    let description = rt::spawn(translate(menu_item.description.to_owned(), FROM.to_owned(), target_language.to_owned()));
     MenuItem {
         id: menu_item.id,
-        name: name.await,
-        category: category.await,
+        name: name.await.unwrap(),
+        category: category.await.unwrap(),
         ingredients_inventory_id: menu_item.ingredients_inventory_id.clone(),
         price: menu_item.price,
-        description: description.await,
+        description: description.await.unwrap(),
     }
 }
 
@@ -48,19 +53,19 @@ pub async fn get_menu() -> Result<impl Responder> {
 #[get("/api/menu/{language}")]
 pub async fn get_menu_translated(language: Path<String>) -> Result<impl Responder> {
     let language = language.into_inner();
-    let mut json = get_menu_items().await.unwrap();
+    let json = get_menu_items().await.unwrap();
 
     if language == "en" {
         return Ok(json);
     }
 
-    let mut futures= Vec::<Pin<Box<dyn std::future::Future<Output = MenuItem>>>>::new();
-    for item in json.iter_mut() {
-        futures.push(Box::pin(translate_menu_item(item, &language)));
+    let mut futures= Vec::<JoinHandle<MenuItem>>::new();
+    for item in json.iter() {
+        futures.push(rt::spawn(translate_menu_item(item.clone(), language.clone())));
     }
     let mut output = vec![];
     for future in futures.iter_mut() {
-        output.push(future.await);
+        output.push(future.await.unwrap());
     }
     
     Ok(Json(output))
