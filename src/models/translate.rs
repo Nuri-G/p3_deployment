@@ -1,5 +1,4 @@
 use std::env;
-use async_trait::async_trait;
 use serde_json::Value;
 
 pub async fn translate(text: String, from: &str, to: &str) -> String {
@@ -15,9 +14,4 @@ pub async fn translate(text: String, from: &str, to: &str) -> String {
     
     let json_val: Value = serde_json::from_str(res.as_str()).unwrap();
     json_val["data"]["translations"][0]["translatedText"].as_str().unwrap().to_owned()
-}
-
-#[async_trait]
-pub trait Translate {
-    async fn translate(&mut self, target_language: &str);
 }

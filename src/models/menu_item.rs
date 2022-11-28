@@ -1,12 +1,9 @@
-use std::{future::Future, pin::Pin};
+use std::pin::Pin;
 
-use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use actix_web::{get, web::{self, Json, Path}, Result, Responder, post, HttpResponse, put};
 
 use crate::models::{helpers::make_connection_pool, translate::translate};
-
-use super::translate::Translate;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct MenuItem {
@@ -16,6 +13,22 @@ pub struct MenuItem {
     pub ingredients_inventory_id: Vec<i32>,
     pub price: f32,
     pub description: String,
+}
+
+async fn translate_menu_item(menu_item: &MenuItem, target_language: &str) -> MenuItem {
+    const FROM: &str = "en";
+
+    let name = translate(menu_item.name.to_owned(), FROM, target_language);
+    let category = translate(menu_item.category.to_owned(), FROM, target_language);
+    let description = translate(menu_item.description.to_owned(), FROM, target_language);
+    MenuItem {
+        id: menu_item.id,
+        name: name.await,
+        category: category.await,
+        ingredients_inventory_id: menu_item.ingredients_inventory_id.clone(),
+        price: menu_item.price,
+        description: description.await,
+    }
 }
 
 async fn get_menu_items() -> Result<Json<Vec<MenuItem>>> {
@@ -32,20 +45,6 @@ pub async fn get_menu() -> Result<impl Responder> {
 
 }
 
-#[async_trait]
-impl Translate for MenuItem {
-    async fn translate(&mut self, target_language: &str) {
-        const FROM: &str = "en";
-
-        let name = translate(self.name.to_owned(), FROM, target_language);
-        let category = translate(self.category.to_owned(), FROM, target_language);
-        let description = translate(self.description.to_owned(), FROM, target_language);
-        self.name = name.await;
-        self.category = category.await;
-        self.description = description.await;
-    }
-}
-
 #[get("/api/menu/{language}")]
 pub async fn get_menu_translated(language: Path<String>) -> Result<impl Responder> {
     let language = language.into_inner();
@@ -55,14 +54,16 @@ pub async fn get_menu_translated(language: Path<String>) -> Result<impl Responde
         return Ok(json);
     }
 
-    let mut futures= Vec::<Pin<Box<dyn std::future::Future<Output = ()> + Send>>>::new();
-    let mut output: Vec<MenuItem> = vec![];
-    for a in json.iter_mut() {
-        futures.push(a.translate(&language));
-        output.push(a);
+    let mut futures= Vec::<Pin<Box<dyn std::future::Future<Output = MenuItem>>>>::new();
+    for item in json.iter_mut() {
+        futures.push(Box::pin(translate_menu_item(item, &language)));
+    }
+    let mut output = vec![];
+    for future in futures.iter_mut() {
+        output.push(future.await);
     }
     
-    Ok(json)
+    Ok(Json(output))
 }
 
 #[post("/api/menu")]
