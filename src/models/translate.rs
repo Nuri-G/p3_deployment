@@ -1,21 +1,23 @@
 use std::env;
-
+use async_trait::async_trait;
 use serde_json::Value;
 
-pub async fn translate(body: String, from: String, to: String) -> String {
+pub async fn translate(text: String, from: &str, to: &str) -> String {
     let client = reqwest::Client::new();
-    let params = [("from", from.as_str()), ("to", "es"), ("json", body.as_str()), ("protected_keys", "ingredients_inventory_id")];
-    let res = client.post("https://nlp-translation.p.rapidapi.com/v1/jsontranslate")
-        .header("X-RapidAPI-Key", env::var("TRANSLATE_KEY").unwrap())
-        .header("X-RapidAPI-Host", "nlp-translation.p.rapidapi.com")
-        .form(&params)
+    let translate_key = env::var("TRANSLATE_KEY").unwrap();
+    let qu = [("q", text.as_str()), ("source", from), ("target", to), ("key", translate_key.as_str())];
+    let url = "https://translation.googleapis.com/language/translate/v2";
+    let res = client.post(url)
+        .query(&qu)
+        .header("content-length", 0)
         .send()
-        .await.unwrap()
-        .text()
-        .await.unwrap();
-    let res: Value = serde_json::from_str(res.as_str()).unwrap();
-    let translated = res["translated_json"].to_string();
-    let translated: Value = serde_json::from_str(&translated).unwrap();
-    let pre_slice = translated[to].to_string().replace("\\\"", "\"");
-    pre_slice[1..pre_slice.len() - 1].to_owned()
+        .await.unwrap().text().await.unwrap();
+    
+    let json_val: Value = serde_json::from_str(res.as_str()).unwrap();
+    json_val["data"]["translations"][0]["translatedText"].as_str().unwrap().to_owned()
+}
+
+#[async_trait]
+pub trait Translate {
+    async fn translate(&mut self, target_language: &str);
 }

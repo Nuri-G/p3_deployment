@@ -1,7 +1,12 @@
+use std::{future::Future, pin::Pin};
+
+use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
-use actix_web::{get, web::{self, Path, Json}, Result, Responder, post, HttpResponse, put};
+use actix_web::{get, web::{self, Json, Path}, Result, Responder, post, HttpResponse, put};
 
 use crate::models::{helpers::make_connection_pool, translate::translate};
+
+use super::translate::Translate;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct MenuItem {
@@ -27,26 +32,37 @@ pub async fn get_menu() -> Result<impl Responder> {
 
 }
 
+#[async_trait]
+impl Translate for MenuItem {
+    async fn translate(&mut self, target_language: &str) {
+        const FROM: &str = "en";
+
+        let name = translate(self.name.to_owned(), FROM, target_language);
+        let category = translate(self.category.to_owned(), FROM, target_language);
+        let description = translate(self.description.to_owned(), FROM, target_language);
+        self.name = name.await;
+        self.category = category.await;
+        self.description = description.await;
+    }
+}
+
 #[get("/api/menu/{language}")]
 pub async fn get_menu_translated(language: Path<String>) -> Result<impl Responder> {
     let language = language.into_inner();
-    let json = get_menu_items().await.unwrap();
+    let mut json = get_menu_items().await.unwrap();
 
     if language == "en" {
-        let json_string = serde_json::to_string(&json).unwrap();
-        return  Ok(json_string);
+        return Ok(json);
     }
 
-    let mut translated = "{".to_string();
-    for a in json.iter() {
-        let s = serde_json::to_string(a).unwrap();
-        let tr = translate(s, "en".to_string(), language.clone()).await.split("\n").next().unwrap().to_owned();
-        translated += &tr;
-        translated += ",";
+    let mut futures= Vec::<Pin<Box<dyn std::future::Future<Output = ()> + Send>>>::new();
+    let mut output: Vec<MenuItem> = vec![];
+    for a in json.iter_mut() {
+        futures.push(a.translate(&language));
+        output.push(a);
     }
-    translated = translated[0.. translated.len() - 1].to_string();
-    translated += "}";
-    Ok(translated)
+    
+    Ok(json)
 }
 
 #[post("/api/menu")]
