@@ -8,7 +8,7 @@ use dotenvy::dotenv;
 use models::menu_item::get_menu_translated;
 
 use crate::models::menu_item::{get_menu, post_menu, put_menu};
-use crate::models::sale::{get_sales, post_sales};
+use crate::models::sale::{get_sales, post_sales, get_sales_by_item};
 use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredients};
 use crate::models::employee::{get_employees, post_employees, put_employees};
 
@@ -28,6 +28,7 @@ async fn main() -> std::io::Result<()> {
             .service(put_menu)
             .service(get_sales)
             .service(post_sales)
+            .service(get_sales_by_item)
             .service(get_ingredients)
             .service(post_ingredients)
             .service(put_ingredients)
