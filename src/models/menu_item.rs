@@ -12,11 +12,12 @@ pub struct MenuItem {
     pub ingredients_inventory_id: Vec<i32>,
     pub price: f32,
     pub description: String,
+    pub image_url: Option<String>,
 }
 
 impl Clone for MenuItem {
     fn clone(&self) -> Self {
-        Self { id: self.id.clone(), name: self.name.clone(), category: self.category.clone(), ingredients_inventory_id: self.ingredients_inventory_id.clone(), price: self.price.clone(), description: self.description.clone() }
+        Self { id: self.id.clone(), name: self.name.clone(), category: self.category.clone(), ingredients_inventory_id: self.ingredients_inventory_id.clone(), price: self.price.clone(), description: self.description.clone(), image_url: self.image_url.clone() }
     }
 }
 
@@ -33,6 +34,7 @@ async fn translate_menu_item(menu_item: MenuItem, target_language: String) -> Me
         ingredients_inventory_id: menu_item.ingredients_inventory_id.clone(),
         price: menu_item.price,
         description: description.await.unwrap(),
+        image_url: menu_item.image_url,
     }
 }
 
