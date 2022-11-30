@@ -1,13 +1,15 @@
 mod models;
 
+use std::collections::HashMap;
 use std::env;
+use std::sync::Mutex;
 
 use actix_cors::Cors;
 use actix_web::{HttpServer, App};
 use dotenvy::dotenv;
 use models::employee::user_from_token;
 use models::menu_item::get_menu_translated;
-use models::translate::translated_keywords;
+use models::translate::{translated_keywords, TranslationCache};
 
 use crate::models::menu_item::{get_menu, post_menu, put_menu};
 use crate::models::sale::{get_sales, post_sales};
@@ -20,9 +22,15 @@ async fn main() -> std::io::Result<()> {
     let host = env::var("HOST").expect("Failed to read 'HOST' environment variable.
         Use 127.0.0.1 for local or 0.0.0.0 for deployment.");
     let port = env::var("PORT").unwrap().parse::<u16>().unwrap();
-    HttpServer::new(|| {
+
+    let translation_cache = actix_web::web::Data::new(TranslationCache {
+        values: Mutex::new(HashMap::new()),
+    });
+
+    HttpServer::new(move || {
         let cors = Cors::permissive();
         App::new()
+        .app_data(translation_cache.clone())
             .wrap(cors)
             .service(get_menu)
             .service(get_menu_translated)

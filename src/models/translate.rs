@@ -1,6 +1,10 @@
-use std::env;
-use actix_web::{get, Responder, web::Path, Result};
+use std::{env, collections::HashMap, sync::Mutex};
+use actix_web::{get, Responder, web::{Path, self}, Result};
 use serde_json::Value;
+
+pub struct TranslationCache {
+    pub values: Mutex<HashMap<String, String>>,
+}
 
 pub async fn translate(text: String, from: String, to: String) -> String {
     let client = reqwest::Client::new();
@@ -14,13 +18,23 @@ pub async fn translate(text: String, from: String, to: String) -> String {
         .await.unwrap().text().await.unwrap();
     
     let json_val: Value = serde_json::from_str(res.as_str()).unwrap();
-    json_val["data"]["translations"][0]["translatedText"].as_str().unwrap().to_owned()
+    let out = json_val["data"]["translations"][0]["translatedText"].as_str().unwrap().to_owned();
+    out
 }
 
 #[get("api/translated_words/{language}")]
-pub async fn translated_keywords(language: Path<String>) -> Result<impl Responder> {
+pub async fn translated_keywords(state: web::Data<TranslationCache>, language: Path<String>) -> Result<impl Responder> {
     const FROM: &str = "en";
     let language = language.into_inner();
+    match state.values.lock() {
+        Ok(values) => {
+            if values.contains_key(&language) {
+                let out = values.get(&language).unwrap().to_owned();
+                return Ok(out);
+            }
+        },
+        Err(_) => panic!("Translation mutex was poisoned."),
+    }
     let all = translate("All".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let order = translate("Your Order".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let pay = translate("Pay".to_owned(), FROM.to_owned(), language.to_owned()).await;
@@ -41,6 +55,12 @@ pub async fn translated_keywords(language: Path<String>) -> Result<impl Responde
     "#, all, order, pay, clear, tax, removed, created, cleared);
     json_text = "{".to_owned() + json_text.as_str();
     json_text = json_text + "}";
-    let out: Value = serde_json::from_str(&json_text).unwrap();
-    Ok(out.to_string())
+    let out = serde_json::from_str::<Value>(&json_text).unwrap().to_string();
+    match state.values.lock() {
+        Ok(mut values) => {
+            values.insert(language, out.clone());
+        },
+        Err(_) => panic!("Translation mutex was poisoned."),
+    }
+    Ok(out)
 }
