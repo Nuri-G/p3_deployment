@@ -3,4 +3,4 @@ pub mod sale;
 pub mod ingredients;
 pub mod employee;
 pub mod helpers;
-mod translate;
+pub mod translate;
