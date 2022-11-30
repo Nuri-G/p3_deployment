@@ -50,7 +50,7 @@ async fn get_sales_by_item(path: web::Path<(NaiveDate, NaiveDate)>) -> Result<im
     let rows: Vec<ItemSale> = sqlx::query_as!(ItemSale, "SELECT menu_items.name, COUNT(sales.id), SUM(menu_items.price)
         FROM menu_items, sales
         WHERE menu_items.id = ANY (sales.menu_items_id) AND sales.timestamp BETWEEN $1 AND $2
-        GROUP BY menu_items.name",
+        GROUP BY menu_items.name ORDER BY sum DESC",
         from, to)
         .fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
