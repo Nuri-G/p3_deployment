@@ -10,10 +10,11 @@ actix-web = "4"
 actix-cors = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.6", features = ["runtime-actix-rustls", "postgres", "chrono"] }
+sqlx = { version = "0.6", features = ["runtime-actix-rustls", "postgres", "chrono", "bigdecimal"] }
 dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = "0.11"
+bigdecimal = { version = "0.3.0", features = ["serde"] }
 
 [profile.dev.build-override]
 opt-level=3

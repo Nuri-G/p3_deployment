@@ -1,3 +1,5 @@
+use chrono::{NaiveDate, Local};
+use bigdecimal::BigDecimal;
 use serde::{Serialize, Deserialize};
 use actix_web::{get, web, Result, Responder, post, HttpResponse, put};
 
@@ -9,6 +11,12 @@ pub struct Ingredient {
     pub item_name: String,
     pub item_amount: i32,
     pub storage_location: String,
+}
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Excess {
+    pub ingredient: String,
+    pub percent: Option<BigDecimal>,
 }
 
 #[get("/api/ingredients")]
@@ -40,4 +48,27 @@ pub async fn put_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
             Ok(_) => HttpResponse::Ok().finish(),
             Err(_) => HttpResponse::BadRequest().finish(),
         }
+}
+
+#[get("/api/ingredients/excess/{from}")]
+pub async fn get_excess(path: web::Path<NaiveDate>) -> Result<impl Responder> {
+    let from = path.into_inner();
+    let now = Local::now().date_naive();
+    let pool = make_connection_pool().await;
+    let rows: Vec<Excess> = sqlx::query_as!(Excess, "WITH ingredientPercents (ingredient, percent) AS 
+        (WITH menuItemsCount (ingredients, count) AS
+        (SELECT menu_items.ingredients_inventory_id, COUNT(sales.id)
+        FROM menu_items, sales
+        WHERE menu_items.id = ANY (sales.menu_items_id)
+        AND sales.timestamp >= $1 AND sales.timestamp <= $2
+        GROUP BY menu_items.ingredients_inventory_id)
+        SELECT ingredients_inventory.item_name, (SUM(menuItemsCount.count) / (SUM(menuItemsCount.count) + ingredients_inventory.item_amount)) * 100 AS percent
+        FROM ingredients_inventory, menuItemsCount
+        WHERE ingredients_inventory.id = ANY (menuItemsCount.ingredients)
+        GROUP BY ingredients_inventory.item_name, ingredients_inventory.item_amount)
+        SELECT ingredientPercents.ingredient, ROUND(ingredientPercents.percent, 2) as percent 
+        FROM ingredientPercents WHERE percent < 10",
+        from, now)
+        .fetch_all(&pool).await.expect("Failed to execute query.");
+    Ok(web::Json(rows))
 }
