@@ -1,5 +1,10 @@
+use core::fmt;
+use std::{pin::Pin, future::Future};
+
+use reqwest::StatusCode;
 use serde::{Serialize, Deserialize};
-use actix_web::{get, web, Result, Responder, post, HttpResponse, put};
+use actix_web::{get, web, Result, Responder, post, HttpResponse, put, FromRequest, ResponseError};
+use serde_json::Value;
 
 use crate::models::helpers::make_connection_pool;
 
@@ -43,4 +48,66 @@ pub async fn put_employees(data: web::Json<Employee>) -> HttpResponse {
             Ok(_) => HttpResponse::Ok().finish(),
             Err(_) => HttpResponse::BadRequest().finish(),
         }
+}
+
+#[get("/auth")]
+pub async fn user_from_token(e: Employee) -> Result<impl Responder> {
+    Ok(web::Json(e))
+}
+
+#[derive(Debug)]
+pub struct FromRequestError {
+    status: StatusCode,
+}
+
+impl fmt::Display for FromRequestError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl ResponseError for FromRequestError {
+    fn status_code(&self) -> reqwest::StatusCode {
+        self.status
+    }
+
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        HttpResponse::build(self.status).finish()
+    }
+}
+
+impl FromRequest for Employee {
+    type Error = FromRequestError;
+
+    type Future = Pin<Box<dyn Future<Output = Result<Employee, FromRequestError>>>>;
+
+    fn from_request(req: &actix_web::HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
+        let head = req.head();
+        let token = head.headers.get("token").unwrap().to_str().unwrap();
+        let url = format!("https://oauth2.googleapis.com/tokeninfo?id_token={}", token);
+        let client = reqwest::Client::new();
+        Box::pin(async move {
+            let res = client.get(url).send().await.unwrap().text().await.unwrap();
+            println!("{}", res);
+            let res_json: Value = serde_json::from_str(res.as_str()).unwrap();
+
+            match &res_json["email"] {
+                Value::String(email) => {
+                    let pool = make_connection_pool().await;
+                    let query = format!("SELECT * FROM employees WHERE employee_email = '{}';", email);
+                    let mut rows: Vec<Employee> = sqlx::query_as(query.as_str()).fetch_all(&pool).await.expect("Failed to execute query.");
+                    if rows.len() == 0 {
+                        return Err(FromRequestError {status: StatusCode::UNAUTHORIZED});
+                    }
+                    let employee = rows.remove(0);
+                    Ok(employee)
+                },
+                _ => Err(FromRequestError {status: StatusCode::UNAUTHORIZED}),
+            }
+        })
+    }
+
+    fn extract(req: &actix_web::HttpRequest) -> Self::Future {
+        Self::from_request(req, &mut actix_web::dev::Payload::None)
+    }
 }
