@@ -11,6 +11,7 @@ pub struct Ingredient {
     pub item_name: String,
     pub item_amount: i32,
     pub storage_location: String,
+    pub min_req: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
@@ -23,6 +24,7 @@ pub struct Excess {
 pub struct Restock {
     pub item_name: String,
     pub item_amount: i32,
+    pub min_req: Option<i32>,
 }
 
 #[get("/api/ingredients")]
@@ -35,8 +37,8 @@ pub async fn get_ingredients() -> Result<impl Responder> {
 #[post("/api/ingredients")]
 pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;
-    match sqlx::query!("INSERT INTO ingredients_inventory (item_name, item_amount, storage_location) VALUES ($1, $2, $3)",
-        data.item_name, data.item_amount, data.storage_location)
+    match sqlx::query!("INSERT INTO ingredients_inventory (item_name, item_amount, storage_location, min_req) VALUES ($1, $2, $3, $4)",
+        data.item_name, data.item_amount, data.storage_location, data.min_req)
         .execute(&pool)
         .await {
             Ok(_) => HttpResponse::Ok().finish(),
@@ -47,8 +49,8 @@ pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
 #[put("/api/ingredients")]
 pub async fn put_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;
-    match sqlx::query!("UPDATE ingredients_inventory SET item_name = $1, item_amount = $2, storage_location = $3 WHERE id = $4",
-        data.item_name, data.item_amount, data.storage_location, data.id)
+    match sqlx::query!("UPDATE ingredients_inventory SET item_name = $1, item_amount = $2, storage_location = $3, min_req = $4 WHERE id = $5",
+        data.item_name, data.item_amount, data.storage_location, data.min_req, data.id)
         .execute(&pool)
         .await {
             Ok(_) => HttpResponse::Ok().finish(),
@@ -79,12 +81,10 @@ pub async fn get_excess(path: web::Path<NaiveDate>) -> Result<impl Responder> {
     Ok(web::Json(rows))
 }
 
-#[get("/api/ingredients/restock/{min}")]
-pub async fn get_restock(path: web::Path<i32>) -> Result<impl Responder> {
-    let min = path.into_inner();
+#[get("/api/ingredients/restock")]
+pub async fn get_restock() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
-    let rows: Vec<Restock> = sqlx::query_as!(Restock, "SELECT item_name, item_amount FROM ingredients_inventory WHERE item_amount < $1",
-        min)
+    let rows: Vec<Restock> = sqlx::query_as("SELECT item_name, item_amount, min_req FROM ingredients_inventory WHERE item_amount < min_req")
         .fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
 }
