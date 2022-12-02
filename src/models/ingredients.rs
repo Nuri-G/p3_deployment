@@ -19,6 +19,12 @@ pub struct Excess {
     pub percent: Option<BigDecimal>,
 }
 
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Restock {
+    pub item_name: String,
+    pub item_amount: i32,
+}
+
 #[get("/api/ingredients")]
 pub async fn get_ingredients() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
@@ -69,6 +75,16 @@ pub async fn get_excess(path: web::Path<NaiveDate>) -> Result<impl Responder> {
         SELECT ingredientPercents.ingredient, ROUND(ingredientPercents.percent, 2) as percent 
         FROM ingredientPercents WHERE percent < 10",
         from, now)
+        .fetch_all(&pool).await.expect("Failed to execute query.");
+    Ok(web::Json(rows))
+}
+
+#[get("/api/ingredients/restock/{min}")]
+pub async fn get_restock(path: web::Path<i32>) -> Result<impl Responder> {
+    let min = path.into_inner();
+    let pool = make_connection_pool().await;
+    let rows: Vec<Restock> = sqlx::query_as!(Restock, "SELECT item_name, item_amount FROM ingredients_inventory WHERE item_amount < $1",
+        min)
         .fetch_all(&pool).await.expect("Failed to execute query.");
     Ok(web::Json(rows))
 }

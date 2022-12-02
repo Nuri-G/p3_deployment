@@ -13,7 +13,7 @@ use models::translate::{translated_keywords, TranslationCache};
 
 use crate::models::menu_item::{get_menu, post_menu, put_menu};
 use crate::models::sale::{get_sales, post_sales, get_sales_by_item};
-use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredients, get_excess};
+use crate::models::ingredients::{get_ingredients, post_ingredients, put_ingredients, get_excess, get_restock};
 use crate::models::employee::{get_employees, post_employees, put_employees};
 
 #[actix_web::main]
@@ -43,6 +43,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_ingredients)
             .service(put_ingredients)
             .service(get_excess)
+            .service(get_restock)
             .service(get_employees)
             .service(post_employees)
             .service(put_employees)
