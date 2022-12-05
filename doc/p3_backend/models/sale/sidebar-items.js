@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ItemSale","Represents sales for a specific item in the database."],["Sale","Representation of Sales in the database."],["get_sales","Returns a JSON array with all Sales in the database."],["get_sales_by_item","Returns JSON array of sales in the specified date range for each item."],["post_sales","Inserts a Sale into the database."]]});

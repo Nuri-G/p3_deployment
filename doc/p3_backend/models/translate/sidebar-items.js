@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["translate","Translates text from the language ‘from’ to ‘to’."]],"struct":[["TranslationCache",""],["translated_keywords","Returns a JSON object with regularly used words translated from English to the target language. Caches the result of any translations to reduce future API calls."]]});

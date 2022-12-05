@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["p3_backend"] = [{"text":"impl FromRequest for <a class=\"struct\" href=\"p3_backend/models/employee/struct.Employee.html\" title=\"struct p3_backend::models::employee::Employee\">Employee</a>","synthetic":false,"types":["p3_backend::models::employee::Employee"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

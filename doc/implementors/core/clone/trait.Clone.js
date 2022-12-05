@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["p3_backend"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.61.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"p3_backend/models/menu_item/struct.MenuItem.html\" title=\"struct p3_backend::models::menu_item::MenuItem\">MenuItem</a>","synthetic":false,"types":["p3_backend::models::menu_item::MenuItem"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

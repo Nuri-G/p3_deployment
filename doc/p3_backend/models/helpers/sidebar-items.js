@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["make_connection_pool","Helper function to create a connection to the postgress DB."]]});
