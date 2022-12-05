@@ -1,6 +1,7 @@
 use std::env;
 use sqlx::{postgres::PgPoolOptions, Postgres, Pool};
 
+/// Helper function to create a connection to the postgress DB.
 pub async fn make_connection_pool() -> Pool<Postgres> {
     let connection_string = env::var("DATABASE_URL").unwrap();
     PgPoolOptions::new()

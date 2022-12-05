@@ -6,6 +6,7 @@ pub struct TranslationCache {
     pub values: Mutex<HashMap<String, String>>,
 }
 
+/// Translates text from the language 'from' to 'to'.
 pub async fn translate(text: String, from: String, to: String) -> String {
     let client = reqwest::Client::new();
     let translate_key = env::var("TRANSLATE_KEY").unwrap();
@@ -22,6 +23,8 @@ pub async fn translate(text: String, from: String, to: String) -> String {
     out
 }
 
+/// Returns a JSON object with regularly used words translated from English to the target language.
+/// Caches the result of any translations to reduce future API calls.
 #[get("api/translated_words/{language}")]
 pub async fn translated_keywords(state: web::Data<TranslationCache>, language: Path<String>) -> Result<impl Responder> {
     const FROM: &str = "en";

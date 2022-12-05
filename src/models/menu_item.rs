@@ -21,6 +21,9 @@ impl Clone for MenuItem {
     }
 }
 
+/// Translates the menu items name, category, and description from English into the target language.
+/// Needs ownership of the MenuItem so that it can run asynchronously.
+/// Returns a new MenuItem.
 async fn translate_menu_item(menu_item: MenuItem, target_language: String) -> MenuItem {
     const FROM: &str = "en";
 
@@ -38,6 +41,7 @@ async fn translate_menu_item(menu_item: MenuItem, target_language: String) -> Me
     }
 }
 
+/// Returns a JSON array of all menu items.
 async fn get_menu_items() -> Result<Json<Vec<MenuItem>>> {
     let pool = make_connection_pool().await;
     let rows: Vec<MenuItem> = sqlx::query_as("SELECT * FROM menu_items ORDER BY name ASC").fetch_all(&pool).await.expect("Failed to execute query.");
@@ -46,12 +50,15 @@ async fn get_menu_items() -> Result<Json<Vec<MenuItem>>> {
     return  Ok(json);
 }
 
+/// Returns the menu without translation.
 #[get("/api/menu")]
 pub async fn get_menu() -> Result<impl Responder> {
     get_menu_items().await
 
 }
 
+/// Returns the menu translated into the target language.
+/// Caches the result of any translations for future calls.
 #[get("/api/menu/{language}")]
 pub async fn get_menu_translated(state: web::Data<TranslationCache>, language: Path<String>) -> Result<impl Responder> {
     let language = language.into_inner();
@@ -97,6 +104,7 @@ pub async fn get_menu_translated(state: web::Data<TranslationCache>, language: P
     Ok(Json(output))
 }
 
+/// Inserts the MenuItem into the database.
 #[post("/api/menu")]
 pub async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
     let pool = make_connection_pool().await;
@@ -109,6 +117,7 @@ pub async fn post_menu(data: web::Json<MenuItem>) -> HttpResponse {
         }
 }
 
+/// Updates the MenuItem in the database.
 #[put("/api/menu")]
 pub async fn put_menu(data: web::Json<MenuItem>) -> HttpResponse {
     let pool = make_connection_pool().await;
