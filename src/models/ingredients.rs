@@ -15,12 +15,14 @@ pub struct Ingredient {
     pub min_req: Option<i32>,
 }
 
+/// Representation of Excess for building an Excess report.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Excess {
     pub ingredient: String,
     pub percent: Option<BigDecimal>,
 }
 
+/// Representation of a Restock for building the Restock report.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Restock {
     pub item_name: String,

@@ -14,6 +14,7 @@ pub struct Sale {
     pub employee_id: i32,
 }
 
+/// Represents sales for a specific item in the database.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct ItemSale {
     pub name: String,
@@ -46,6 +47,7 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
         }
 }
 
+/// Returns JSON array of sales in the specified date range for each item.
 #[get("/api/sales/item/{from}/{to}")]
 async fn get_sales_by_item(path: web::Path<(NaiveDate, NaiveDate)>) -> Result<impl Responder> {
     let (from, to) = path.into_inner();
