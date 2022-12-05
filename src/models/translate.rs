@@ -39,13 +39,16 @@ pub async fn translated_keywords(state: web::Data<TranslationCache>, language: P
         Err(_) => panic!("Translation mutex was poisoned."),
     }
     let all = translate("All".to_owned(), FROM.to_owned(), language.to_owned()).await;
-    let order = translate("Your Order".to_owned(), FROM.to_owned(), language.to_owned()).await;
+    let cart = translate("Cart".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let pay = translate("Pay".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let clear = translate("Clear All".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let tax = translate("Tax".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let removed = translate("Removed".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let created = translate("Order Created".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let cleared = translate("Order Cleared".to_owned(), FROM.to_owned(), language.to_owned()).await;
+    let added = translate("Added items will appear here.".to_owned(), FROM.to_owned(), language.to_owned()).await;
+    let lang = translate("Language".to_owned(), FROM.to_owned(), language.to_owned()).await;
+    let search = translate("Search".to_owned(), FROM.to_owned(), language.to_owned()).await;
     let mut json_text = format!(r#"
             "all": "{}",
             "order": "{}",
@@ -54,8 +57,11 @@ pub async fn translated_keywords(state: web::Data<TranslationCache>, language: P
             "tax": "{}",
             "removed": "{}",
             "created": "{}",
-            "cleared": "{}"
-    "#, all, order, pay, clear, tax, removed, created, cleared);
+            "cleared": "{}",
+            "added": "{}",
+            "lang": "{}",
+            "search": "{}"
+    "#, all, cart, pay, clear, tax, removed, created, cleared, added, lang, search);
     json_text = "{".to_owned() + json_text.as_str();
     json_text = json_text + "}";
     let out = serde_json::from_str::<Value>(&json_text).unwrap().to_string();
