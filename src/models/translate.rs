@@ -29,6 +29,26 @@ pub async fn translate(text: String, from: String, to: String) -> String {
 pub async fn translated_keywords(state: web::Data<TranslationCache>, language: Path<String>) -> Result<impl Responder> {
     const FROM: &str = "en";
     let language = language.into_inner();
+
+    if language == "en" {
+        let json_text = r#"
+            {
+                "all": "All",
+                "cart": "Cart",
+                "pay": "Pay",
+                "clear": "Clear All",
+                "tax": "Tax",
+                "removed": "Removed",
+                "created": "Order Created",
+                "cleared": "Order Cleared",
+                "added": "Added items will appear here.",
+                "lang": "Language",
+                "search": "Search"
+            }
+        "#;
+        return Ok(serde_json::from_str::<Value>(&json_text).unwrap().to_string());
+    }
+
     match state.values.lock() {
         Ok(values) => {
             if values.contains_key(&language) {
