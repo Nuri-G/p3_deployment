@@ -50,7 +50,7 @@ pub async fn put_employees(data: web::Json<Employee>) -> HttpResponse {
         }
 }
 
-#[get("/auth")]
+#[post("/api/auth")]
 pub async fn user_from_token(e: Employee) -> Result<impl Responder> {
     Ok(web::Json(e))
 }
