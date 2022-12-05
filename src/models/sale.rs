@@ -15,6 +15,13 @@ pub struct Sale {
 }
 
 /// Returns a JSON array with all Sales in the database.
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct ItemSale {
+    pub name: String,
+    pub count: Option<i64>,
+    pub sum: Option<f32>,
+}
+
 #[get("/api/sales")]
 async fn get_sales() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
@@ -37,4 +44,17 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
                 HttpResponse::BadRequest().finish()
             }
         }
+}
+
+#[get("/api/sales/item/{from}/{to}")]
+async fn get_sales_by_item(path: web::Path<(NaiveDate, NaiveDate)>) -> Result<impl Responder> {
+    let (from, to) = path.into_inner();
+    let pool = make_connection_pool().await;
+    let rows: Vec<ItemSale> = sqlx::query_as!(ItemSale, "SELECT menu_items.name, COUNT(sales.id), SUM(menu_items.price)
+        FROM menu_items, sales
+        WHERE menu_items.id = ANY (sales.menu_items_id) AND sales.timestamp BETWEEN $1 AND $2
+        GROUP BY menu_items.name ORDER BY sum DESC",
+        from, to)
+        .fetch_all(&pool).await.expect("Failed to execute query.");
+    Ok(web::Json(rows))
 }
