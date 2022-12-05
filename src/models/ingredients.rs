@@ -5,6 +5,7 @@ use actix_web::{get, web, Result, Responder, post, HttpResponse, put};
 
 use crate::models::helpers::make_connection_pool;
 
+/// Representation of Ingredients in the database.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Ingredient {
     pub id: Option<i32>,
@@ -14,12 +15,14 @@ pub struct Ingredient {
     pub min_req: Option<i32>,
 }
 
+/// Representation of Excess for building an Excess report.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Excess {
     pub ingredient: String,
     pub percent: Option<BigDecimal>,
 }
 
+/// Representation of a Restock for building the Restock report.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Restock {
     pub item_name: String,
@@ -27,6 +30,7 @@ pub struct Restock {
     pub min_req: Option<i32>,
 }
 
+/// Returns a JSON array of all the ingredients in the database.
 #[get("/api/ingredients")]
 pub async fn get_ingredients() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
@@ -34,6 +38,7 @@ pub async fn get_ingredients() -> Result<impl Responder> {
     Ok(web::Json(rows))
 }
 
+/// Inserts an Ingredient into the database.
 #[post("/api/ingredients")]
 pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;
@@ -46,6 +51,7 @@ pub async fn post_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
         }
 }
 
+/// Updates an Ingredient in the database.
 #[put("/api/ingredients")]
 pub async fn put_ingredients(data: web::Json<Ingredient>) -> HttpResponse {
     let pool = make_connection_pool().await;

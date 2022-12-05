@@ -4,6 +4,7 @@ use actix_web::{get, web, Result, Responder, post, HttpResponse};
 
 use crate::models::helpers::make_connection_pool;
 
+/// Representation of Sales in the database.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Sale {
     pub id: Option<i32>,
@@ -13,6 +14,7 @@ pub struct Sale {
     pub employee_id: i32,
 }
 
+/// Represents sales for a specific item in the database.
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct ItemSale {
     pub name: String,
@@ -20,6 +22,7 @@ pub struct ItemSale {
     pub sum: Option<f32>,
 }
 
+/// Returns a JSON array with all Sales in the database.
 #[get("/api/sales")]
 async fn get_sales() -> Result<impl Responder> {
     let pool = make_connection_pool().await;
@@ -27,6 +30,7 @@ async fn get_sales() -> Result<impl Responder> {
     Ok(web::Json(rows))
 }
 
+/// Inserts a Sale into the database.
 #[post("/api/sales")]
 async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
     let time = Local::now().date_naive();
@@ -43,6 +47,7 @@ async fn post_sales(data: web::Json<Sale>) -> HttpResponse {
         }
 }
 
+/// Returns JSON array of sales in the specified date range for each item.
 #[get("/api/sales/item/{from}/{to}")]
 async fn get_sales_by_item(path: web::Path<(NaiveDate, NaiveDate)>) -> Result<impl Responder> {
     let (from, to) = path.into_inner();
